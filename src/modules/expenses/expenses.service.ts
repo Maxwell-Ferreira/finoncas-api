@@ -31,6 +31,7 @@ export class ExpensesService {
     return this.expensesModel.findOneAndUpdate(
       { _id: expense._id },
       updateExpenseDto,
+      { new: true },
     );
   }
 
