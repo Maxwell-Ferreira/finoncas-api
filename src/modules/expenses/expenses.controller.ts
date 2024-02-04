@@ -32,8 +32,12 @@ export class ExpensesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.update(+id, updateExpenseDto);
+  update(
+    @Param('id') id: string,
+    @Req() req,
+    @Body() updateExpenseDto: UpdateExpenseDto,
+  ) {
+    return this.expensesService.update(id, req.user._id, updateExpenseDto);
   }
 
   @Delete(':id')

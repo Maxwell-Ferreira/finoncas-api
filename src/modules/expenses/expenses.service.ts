@@ -26,8 +26,12 @@ export class ExpensesService {
     return expense;
   }
 
-  update(id: number, updateExpenseDto: UpdateExpenseDto) {
-    return `This action updates a #${id} expense`;
+  async update(id: string, userId: string, updateExpenseDto: UpdateExpenseDto) {
+    const expense = await this.findOne(id, userId);
+    return this.expensesModel.findOneAndUpdate(
+      { _id: expense._id },
+      updateExpenseDto,
+    );
   }
 
   remove(id: number) {
