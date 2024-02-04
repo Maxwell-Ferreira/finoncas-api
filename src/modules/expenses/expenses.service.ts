@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -17,11 +17,13 @@ export class ExpensesService {
   }
 
   findAll() {
-    return `This action returns all expenses`;
+    return this.expensesModel.find().sort({ createdAt: -1 });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} expense`;
+  async findOne(id: string, userId: string) {
+    const expense = await this.expensesModel.findOne({ _id: id, user: userId });
+    if (!expense) throw new NotFoundException();
+    return expense;
   }
 
   update(id: number, updateExpenseDto: UpdateExpenseDto) {

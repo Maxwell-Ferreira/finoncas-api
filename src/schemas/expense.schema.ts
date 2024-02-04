@@ -6,7 +6,7 @@ export type ExpenseDocument = HydratedDocument<Expense>;
 
 export type ExpenseType = 'FIXED' | 'SINGLE';
 
-@Schema()
+@Schema({ timestamps: true })
 export class Expense {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   user: User;
