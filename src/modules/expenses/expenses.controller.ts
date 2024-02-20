@@ -61,6 +61,6 @@ export class ExpensesController {
     )
     file: Express.Multer.File,
   ) {
-    return this.expensesService.uploadFile(req.user_id, file);
+    return this.expensesService.uploadFile(req.user._id, file);
   }
 }
