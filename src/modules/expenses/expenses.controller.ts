@@ -7,10 +7,15 @@ import {
   Param,
   Delete,
   Req,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('expenses')
 export class ExpensesController {
@@ -43,5 +48,19 @@ export class ExpensesController {
   @Delete(':id')
   remove(@Param('id') id: string, @Req() req) {
     return this.expensesService.remove(id, req.user._id);
+  }
+
+  @Post('/import-file')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(
+    @Req() req,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new FileTypeValidator({ fileType: 'csv' })],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.expensesService.uploadFile(req.user_id, file);
   }
 }

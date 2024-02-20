@@ -22,6 +22,12 @@ export class Expense {
   @Prop({ type: Boolean, default: true })
   active: boolean;
 
+  @Prop({ type: Date, required: true, default: new Date() })
+  date: Date;
+
+  @Prop({ type: String })
+  externalId: string;
+
   @Prop([{ date: Date }])
   payments: { date: Date }[];
 }

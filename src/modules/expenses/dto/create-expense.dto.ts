@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { ExpenseType } from 'src/schemas/expense.schema';
+import { ExpenseType } from 'src/@types/expense-type.type';
 
 export class CreateExpenseDto {
   @IsNotEmpty()
