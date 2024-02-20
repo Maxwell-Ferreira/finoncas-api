@@ -1,17 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { User } from './user.schema';
+import { ExpenseType } from 'src/@types/expense-type.type';
 
 export type ExpenseDocument = HydratedDocument<Expense>;
-
-export type ExpenseType = 'FIXED' | 'SINGLE';
 
 @Schema({ timestamps: true })
 export class Expense {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   user: User;
 
-  @Prop({ type: String, enum: ['FIXED', 'SINGLE'], required: true })
+  @Prop({ type: String, enum: Object.keys(ExpenseType), required: true })
   type: ExpenseType;
 
   @Prop({ type: Number, required: true })
