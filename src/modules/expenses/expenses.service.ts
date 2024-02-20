@@ -38,7 +38,5 @@ export class ExpensesService {
   async remove(id: string, userId: string) {
     const expense = await this.findOne(id, userId);
     await this.expensesModel.deleteOne({ _id: expense._id });
-
-    return `This action removes a #${id} expense`;
   }
 }
