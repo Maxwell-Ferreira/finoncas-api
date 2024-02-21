@@ -25,6 +25,9 @@ export class Expense {
   @Prop({ type: Date, required: true, default: new Date() })
   date: Date;
 
+  @Prop({ type: Date })
+  endedAt: Date;
+
   @Prop({ type: String })
   externalId: string;
 
