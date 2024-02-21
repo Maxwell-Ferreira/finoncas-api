@@ -11,6 +11,7 @@ import {
   UploadedFile,
   ParseFilePipe,
   FileTypeValidator,
+  Query,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
@@ -29,6 +30,11 @@ export class ExpensesController {
   @Get()
   findAll() {
     return this.expensesService.findAll();
+  }
+
+  @Get('/resume')
+  resume(@Req() req, @Query('competence') comptence: string) {
+    return this.expensesService.resume(req.user._id, comptence);
   }
 
   @Get(':id')

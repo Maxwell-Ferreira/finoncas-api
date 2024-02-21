@@ -3,8 +3,9 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Expense, ExpenseDocument } from 'src/schemas/expense.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import * as csv from 'csvtojson';
+import { format, lastDayOfMonth } from 'date-fns';
 @Injectable()
 export class ExpensesService {
   constructor(
@@ -68,5 +69,73 @@ export class ExpensesService {
         { upsert: true },
       );
     }
+  }
+
+  async resume(
+    userId: string,
+    competence: string = format(new Date(), 'yyyy-MM'),
+  ) {
+    console.log(competence);
+
+    const firstDayOfCompetence = new Date(competence + '-01 00:00:00');
+    const lastDayOfCompetence = lastDayOfMonth(
+      new Date(competence + '-01 00:00:00').setHours(59, 59, 59, 999),
+    );
+
+    const user = new mongoose.Types.ObjectId(userId);
+
+    const totalSingle: number = await this.expensesModel
+      .aggregate([
+        {
+          $match: {
+            date: { $gte: firstDayOfCompetence, $lte: lastDayOfCompetence },
+            type: 'SINGLE',
+            user,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: '$amount',
+            },
+          },
+        },
+      ])
+      .then((result) => result[0]?.total || 0);
+
+    const totalFixed: number = await this.expensesModel
+      .aggregate([
+        {
+          $match: {
+            $or: [
+              { endedAt: { $exists: false } },
+              {
+                endedAt: {
+                  $gte: firstDayOfCompetence,
+                },
+              },
+            ],
+            active: true,
+            type: 'FIXED',
+            user,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: {
+              $sum: '$amount',
+            },
+          },
+        },
+      ])
+      .then((result) => result[0]?.total || 0);
+
+    return {
+      totalFixed,
+      totalSingle,
+      total: totalFixed + totalSingle,
+    };
   }
 }
