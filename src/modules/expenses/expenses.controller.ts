@@ -27,9 +27,14 @@ export class ExpensesController {
     return this.expensesService.create(createExpenseDto, req.user._id);
   }
 
-  @Get()
-  findAll() {
-    return this.expensesService.findAll();
+  @Get('single')
+  allSingle(@Req() req, @Query() qs) {
+    return this.expensesService.allSingle(req.user._id, qs.competence, qs);
+  }
+
+  @Get('fixed')
+  allFixed(@Req() req, @Query() qs) {
+    return this.expensesService.allFixed(req.user._id, qs.competence, qs);
   }
 
   @Get('/resume')

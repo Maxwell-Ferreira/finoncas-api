@@ -6,19 +6,64 @@ import { Expense, ExpenseDocument } from 'src/schemas/expense.schema';
 import mongoose, { Model } from 'mongoose';
 import * as csv from 'csvtojson';
 import { format, lastDayOfMonth } from 'date-fns';
+import { QueryFilter } from 'src/utils/query-filter/query-filter';
 @Injectable()
 export class ExpensesService {
   constructor(
     @InjectModel(Expense.name)
     private readonly expensesModel: Model<ExpenseDocument>,
+    private readonly queryFilter: QueryFilter,
   ) {}
+
+  private handleCompetence(competence: string) {
+    const firstDayOfCompetence = new Date(competence + '-01 00:00:00');
+    const lastDayOfCompetence = lastDayOfMonth(
+      new Date(competence + '-01 00:00:00').setHours(59, 59, 59, 999),
+    );
+
+    return { firstDayOfCompetence, lastDayOfCompetence };
+  }
 
   create(createExpenseDto: CreateExpenseDto, userId: string) {
     return this.expensesModel.create({ ...createExpenseDto, user: userId });
   }
 
-  findAll() {
-    return this.expensesModel.find().sort({ createdAt: -1 });
+  findAll(userId: string, filters: any, queryParams: any) {
+    const user = new mongoose.Types.ObjectId(userId);
+
+    return this.queryFilter.findAll({
+      queryParams,
+      model: this.expensesModel,
+      filters: { ...filters, user },
+      searchFields: ['description'],
+    });
+  }
+
+  allSingle(userId: string, competence: string, queryParams: any) {
+    const { firstDayOfCompetence, lastDayOfCompetence } =
+      this.handleCompetence(competence);
+
+    const filters = {
+      date: { $gte: firstDayOfCompetence, $lte: lastDayOfCompetence },
+      type: 'SINGLE',
+    };
+
+    return this.findAll(userId, filters, queryParams);
+  }
+
+  allFixed(userId: string, competence: string, queryParams: any) {
+    const { firstDayOfCompetence } = this.handleCompetence(competence);
+
+    const filters = {
+      $or: [
+        { endedAt: { $exists: false } },
+        { endedAt: { $gte: firstDayOfCompetence } },
+      ],
+      active: true,
+      type: 'FIXED',
+    };
+
+    return this.findAll(userId, filters, queryParams);
   }
 
   async findOne(id: string, userId: string) {
@@ -75,14 +120,9 @@ export class ExpensesService {
     userId: string,
     competence: string = format(new Date(), 'yyyy-MM'),
   ) {
-    console.log(competence);
-
-    const firstDayOfCompetence = new Date(competence + '-01 00:00:00');
-    const lastDayOfCompetence = lastDayOfMonth(
-      new Date(competence + '-01 00:00:00').setHours(59, 59, 59, 999),
-    );
-
     const user = new mongoose.Types.ObjectId(userId);
+    const { firstDayOfCompetence, lastDayOfCompetence } =
+      this.handleCompetence(competence);
 
     const totalSingle: number = await this.expensesModel
       .aggregate([
