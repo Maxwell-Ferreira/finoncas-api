@@ -17,6 +17,7 @@ import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { PayExpenseDto } from './dto/pay-expense.dto';
 
 @Controller('expenses')
 export class ExpensesController {
@@ -73,5 +74,14 @@ export class ExpensesController {
     file: Express.Multer.File,
   ) {
     return this.expensesService.uploadFile(req.user._id, file);
+  }
+
+  @Post(':id/pay')
+  pay(
+    @Param('id') id: string,
+    @Req() req,
+    @Body() payExpenseDto: PayExpenseDto,
+  ) {
+    return this.expensesService.pay(id, req.user._id, payExpenseDto.competence);
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -177,5 +182,28 @@ export class ExpensesService {
       totalSingle,
       total: totalFixed + totalSingle,
     };
+  }
+
+  async pay(id: string, userId: string, competence: string) {
+    const expense = await this.findOne(id, userId);
+    const { firstDayOfCompetence, lastDayOfCompetence } =
+      this.handleCompetence(competence);
+    const hasPayment = expense.payments.find(
+      (payment) =>
+        payment.date >= firstDayOfCompetence &&
+        payment.date < lastDayOfCompetence,
+    );
+
+    if (hasPayment) {
+      throw new HttpException(
+        'Esta despesa já foi paga no mês informado.',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    expense.payments.push({ date: firstDayOfCompetence });
+    await expense.save();
+
+    return expense;
   }
 }
