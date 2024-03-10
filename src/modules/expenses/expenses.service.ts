@@ -44,7 +44,7 @@ export class ExpensesService {
     });
   }
 
-  allSingle(userId: string, competence: string, queryParams: any) {
+  async allSingle(userId: string, competence: string, queryParams: any) {
     const { firstDayOfCompetence, lastDayOfCompetence } =
       this.handleCompetence(competence);
 
@@ -53,22 +53,43 @@ export class ExpensesService {
       type: 'SINGLE',
     };
 
-    return this.findAll(userId, filters, queryParams);
+    const result = await this.findAll(userId, filters, queryParams);
+    result.data = result.data.map((item: any) => ({ ...item, status: 'PAID' }));
+    return result;
   }
 
-  allFixed(userId: string, competence: string, queryParams: any) {
-    const { firstDayOfCompetence } = this.handleCompetence(competence);
+  async allFixed(
+    userId: string,
+    competence = format(new Date(), 'yyyy-MM'),
+    queryParams: any,
+  ) {
+    const { firstDayOfCompetence, lastDayOfCompetence } =
+      this.handleCompetence(competence);
 
     const filters = {
       $or: [
         { endedAt: { $exists: false } },
         { endedAt: { $gte: firstDayOfCompetence } },
       ],
+      date: { $lte: lastDayOfCompetence },
       active: true,
       type: 'FIXED',
     };
 
-    return this.findAll(userId, filters, queryParams);
+    const result = await this.findAll(userId, filters, queryParams);
+    for (const item of result.data) {
+      const hasPayment = item.payments.find(
+        (payment) =>
+          payment.date >= firstDayOfCompetence &&
+          payment.date <= lastDayOfCompetence,
+      );
+
+      console.log(hasPayment);
+
+      item.status = hasPayment ? 'PAID' : 'PENDING';
+    }
+
+    return result;
   }
 
   async findOne(id: string, userId: string) {
